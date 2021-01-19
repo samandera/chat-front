@@ -1,20 +1,33 @@
-import { ApolloClient, gql, InMemoryCache } from '@apollo/client'
+import { ApolloClient, HttpLink, InMemoryCache, split } from '@apollo/client'
+import { getMainDefinition } from '@apollo/client/utilities';
+import { WebSocketLink } from 'apollo-link-ws';
 
-const client = new ApolloClient({
-  cache: new InMemoryCache(),
+const httpLink = new HttpLink({
   uri: 'http://localhost:8080/graphql'
 })
 
-console.log(client)
+const wsLink = new WebSocketLink({
+  uri: `ws://localhost:8080/graphql`,
+  options: {
+    reconnect: true
+  }
+})
 
-client
-  .mutate({
-    mutation: gql`
-      mutation TestQuery {
-        sendMessage(message: "Welcome from frontend!")
-      }
-    `
-  })
-  .then(result => console.log(result))
+const splitLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query)
+    return (
+      definition.kind === 'OperationDefinition' &&
+      definition.operation === 'subscription'
+    )
+  },
+  wsLink,
+  httpLink
+)
+
+const client = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: splitLink
+})
 
   export default client
