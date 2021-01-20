@@ -1,5 +1,5 @@
 import { gql, useMutation, useSubscription } from '@apollo/client'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import logo from './logo.svg'
 import './App.css'
 
@@ -16,16 +16,22 @@ const TestSubscription = gql`
 `
 
 function App() {
-  const [testMutation, { data }] = useMutation(TestMutation, { variables: { message: 'Welcome from frontend!' } })
-  const { data: subscriptionData, loading } = useSubscription(TestSubscription)
+  const [ messages, setMessages ] = useState([])
+  const [ testMutation ] = useMutation(TestMutation, { variables: { message: 'Welcome from frontend!' } })
+  const { data: subscriptionData } = useSubscription(TestSubscription)
   console.log(subscriptionData)
+  useEffect(() => {
+    if (subscriptionData && !messages.includes(subscriptionData.messageSent)) {
+      setMessages([ ...messages, subscriptionData.messageSent ])
+    }
+  }, [ messages, setMessages, subscriptionData ])
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
+        <div>
+          {messages.map(message => <p>{message}</p>)}
+        </div>
         <button
           className="App-link"
           onClick={() => testMutation().then(data => { console.log(data) })}
