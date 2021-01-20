@@ -16,10 +16,10 @@ const TestSubscription = gql`
 `
 
 function App() {
+  const [ inputValue, setInputValue ] = useState('')
   const [ messages, setMessages ] = useState([])
-  const [ testMutation ] = useMutation(TestMutation, { variables: { message: 'Welcome from frontend!' } })
+  const [ testMutation ] = useMutation(TestMutation)
   const { data: subscriptionData } = useSubscription(TestSubscription)
-  console.log(subscriptionData)
   useEffect(() => {
     if (subscriptionData && !messages.includes(subscriptionData.messageSent)) {
       setMessages([ ...messages, subscriptionData.messageSent ])
@@ -32,9 +32,13 @@ function App() {
         <div>
           {messages.map(message => <p>{message}</p>)}
         </div>
+        <input
+          onChange={e => { setInputValue(e.currentTarget.value) }}
+          value={inputValue}
+        />
         <button
           className="App-link"
-          onClick={() => testMutation().then(data => { console.log(data) })}
+          onClick={() => testMutation({ variables: { message: inputValue } })}
         >
           Learn React
         </button>
